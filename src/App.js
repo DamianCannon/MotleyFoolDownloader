@@ -5,7 +5,10 @@ import file from 'file-saver';
 
 class App extends Component {
     state = {
-     boards: []
+		boardName: '',
+		userName: 'valuemargin',
+		boardStartLocation: 'http://boards.fool.co.uk/high-yield-hyp-practical-51676.aspx?mid=11105157&sort=username',
+		boards: []
    };
   
 	saySomething(something) {
@@ -45,19 +48,36 @@ class App extends Component {
 	});  
   }
  
+ changeBoardName = (evt) => {
+    this.setState({
+      boardName: evt.target.value
+    });
+  };
+  
+  changeUserName = (evt) => {
+    this.setState({
+      userName: evt.target.value
+    });
+  };
+
+  changeStartLocation = (evt) => {
+    this.setState({
+      boardStartLocation: evt.target.value
+    });
+  };
+  
   fetchData = (evt) => {
     evt.preventDefault();
 	
 	var self = this;
 	
+	// Get board and user names together with a starting point url for the download
+	if (this.state.boardStartLocation === '') return;
+	
 	xhr({
 	  // valuemargin boards:
-      url: 'http://boards.fool.co.uk/high-yield-hyp-practical-51676.aspx?mid=11105157&sort=username'
-      //url: 'http://boards.fool.co.uk/high-yield-share-strategies-51166.aspx?mid=10237021&sort=username'
+      url:  this.state.boardStartLocation
     }, function (err, data) {
-      /* …save the data here */
-	  //console.log([...data.body.querySelectorAll('a')].filter(x => x.href.includes('boards.fool.co.uk/Messages.asp')));
-	  
 	  // Messages in this table: tblMessagesAsp
 	  var element = document.createElement('div');
 	  element.insertAdjacentHTML('beforeend', data.body);
@@ -65,15 +85,18 @@ class App extends Component {
 	  var nextLink = element.querySelector('.nextLink');
 	  
 	  // Show table of posts
-	  var thing = document.querySelector('#contents');
-	  thing.insertAdjacentElement('beforeend', tableOfPosts);
-	  thing.insertAdjacentElement('beforeend', nextLink);
-	  
-	  // Get list of post links
-	  var postLinks = [...document.querySelectorAll('a')].filter(x => x.href.includes('Message.aspx')).map(h => h.href.replace('localhost:3000', 'boards.fool.co.uk'));
-	  
-	  // Get contents of all posts on this page
-	  postLinks.map(x => self.displayAndSavePostContent(x));
+	  var content = document.querySelector('#contents');
+	  content.insertAdjacentElement('beforeend', tableOfPosts);
+	  content.insertAdjacentElement('beforeend', nextLink);
+
+	  // Get the posts if the requested author is in the list of posts
+	  if (tableOfPosts.innerText.includes(self.state.userName)) {
+		  // Get list of post links
+		  var postLinks = [...document.querySelectorAll('a')].filter(x => x.href.includes('Message.aspx')).map(h => h.href.replace('localhost:3000', 'boards.fool.co.uk'));
+		  
+		  // Get contents of all posts on this page
+		  postLinks.map(x => self.displayAndSavePostContent(x));
+	  }
 	
 	});
 	
@@ -91,13 +114,28 @@ class App extends Component {
 		<h1>Motley Fool Downloader</h1>
 			<form onSubmit={this.fetchData}>
 			  <label>I want to get the posts from this board
-				<input placeholder={"board name"} type="text" />
+				<input 
+					placeholder={"board name"} 
+					type="text" 
+					value={this.state.boardName}
+					onChange={this.changeBoardName}
+				/>
 			  </label>
 			  <label>for this user
-				<input placeholder={"user name"} type="text" />
+				<input 
+					placeholder={"user name"} 
+					type="text" 
+					value={this.state.userName}
+					onChange={this.changeUserName}
+				/>
 			  </label>
 			  <label>starting with this link
-				<input placeholder={"link to board"} type="text" />
+				<input 
+					placeholder={"link to board"} 
+					type="text" 
+					value={this.state.boardStartLocation}
+					onChange={this.changeStartLocation}
+				/>
 			  </label>
 			  <button onClick={this.handleClick.bind(this)}>Get data</button>
 			</form>		
