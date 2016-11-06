@@ -4,12 +4,51 @@ import xhr from 'xhr';
 import file from 'file-saver';
 
 class App extends Component {
-  state = {
-    boards: []
-  };
+    state = {
+     boards: []
+   };
   
+	saySomething(something) {
+		console.log(something);
+	}
+
+	handleClick(e) {
+		this.saySomething("element clicked");
+	}
+	
+  displayAndSavePostContent = (url) => {
+	xhr({
+	// Use heroku app to get around CORS redirect restriction when TMF redirects this url
+	// https://github.com/Rob--W/cors-anywhere/
+	url: 'https://cors-anywhere.herokuapp.com/' + url
+	}, function (err, data) {
+		// Get post html in a queryable state
+		var post = document.createElement('div');
+		post.insertAdjacentHTML('beforeend', data.body);
+
+		// Display details of author, title and date for post
+		var metaData = post.querySelectorAll('.messageMeta .pbnav');
+		var authorName = metaData[0].innerText.trim().replace(/\t/g, '').replace('\n', '');
+		var postTitle = metaData[2].innerText.trim().replace(/\t/g, '').replace('\n', '');
+		var postDate = metaData[3].innerText.trim().replace(/\t/g, '').replace('\n', '').replace('\n', ' ');
+		document.querySelector('#author').innerText = authorName;
+		document.querySelector('#title').innerText = postTitle;
+		document.querySelector('#date').innerText = postDate;
+		
+		// Display post content
+		var content = post.querySelectorAll('#tableMsg .pbmsg')[0].innerText.trim();
+		document.querySelector('#content').innerText = content;
+
+		// Save file to downloads folder with an informative name
+		var blob = new Blob([authorName, '\n', postTitle, '\n', postDate, '\n\n', content], {type: "text/plain;charset=utf-8"});
+		file.saveAs(blob, `${authorName}-${postTitle}-${postDate}.txt`);
+	});  
+  }
+ 
   fetchData = (evt) => {
     evt.preventDefault();
+	
+	var self = this;
 	
 	xhr({
 	  // valuemargin boards:
@@ -34,47 +73,17 @@ class App extends Component {
 	  var postLinks = [...document.querySelectorAll('a')].filter(x => x.href.includes('Message.aspx')).map(h => h.href.replace('localhost:3000', 'boards.fool.co.uk'));
 	  
 	  // Get contents of all posts on this page
-	  // postLinks.map(x => console.log(x));
-	  
-	  // Get contents of first post
-	  xhr({
-		// valuemargin boards:
-		// Use heroku app to get around CORS redirect restriction when TMF redirects this url
-		// https://github.com/Rob--W/cors-anywhere/
-		url: 'https://cors-anywhere.herokuapp.com/' + postLinks[0]
-		}, function (err, data) {
-			var post = document.createElement('div');
-			post.insertAdjacentHTML('beforeend', data.body);
-
-			// metadata for post: document.querySelectorAll('.messageMeta .pbnav')
-			// author: document.querySelectorAll('.messageMeta .pbnav')[0].innerText
-			// title: document.querySelectorAll('.messageMeta .pbnav')[2].innerText
-			// date: document.querySelectorAll('.messageMeta .pbnav')[3].innerText
-			// content: document.querySelectorAll('#tableMsg .pbmsg')[0].innerText
-			var metaData = post.querySelectorAll('.messageMeta .pbnav');
-			var authorName = metaData[0].innerText.trim().replace(/\t/g, '').replace('\n', '');
-			var postTitle = metaData[2].innerText.trim().replace(/\t/g, '').replace('\n', '');
-			var postDate = metaData[3].innerText.trim().replace(/\t/g, '').replace('\n', '').replace('\n', ' ');
-			
-			document.querySelector('#author').innerText = authorName;
-			document.querySelector('#title').innerText = postTitle;
-			document.querySelector('#date').innerText = postDate;
-			
-			var content = post.querySelectorAll('#tableMsg .pbmsg')[0].innerText.trim();
-			document.querySelector('#content').innerText = content;
-		
-			var blob = new Blob([authorName, '\n', postTitle, '\n', postDate, '\n\n', content], {type: "text/plain;charset=utf-8"});
-			file.saveAs(blob, `${authorName}-${postTitle}-${postDate}.txt`);
-		});
-		
+	  postLinks.map(x => self.displayAndSavePostContent(x));
+	
 	});
 	
     this.setState({
       boards: ['http://boards.fool.co.uk/a-fool-and-his-money-51365.aspx?mid=6808140&sort=username']
     });	
 	
-  };
-	
+  }
+
+  
   render() {
     return (
       <div>
@@ -90,7 +99,7 @@ class App extends Component {
 			  <label>starting with this link
 				<input placeholder={"link to board"} type="text" />
 			  </label>
-			  <button>Get data</button>
+			  <button onClick={this.handleClick.bind(this)}>Get data</button>
 			</form>		
 		</div>
 		<div id="contents"></div>
