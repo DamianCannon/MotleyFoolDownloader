@@ -30,14 +30,41 @@ class App extends Component {
 	  thing.insertAdjacentElement('beforeend', nextLink);
 	  
 	  // Get list of post links
-	  var postLinks = [...document.querySelectorAll('a')].filter(x => x.href.includes('Message.aspx')).map(h => h.href);
+	  var postLinks = [...document.querySelectorAll('a')].filter(x => x.href.includes('Message.aspx')).map(h => h.href.replace('localhost:3000', 'boards.fool.co.uk'));
 	  console.log(postLinks);
 	  
-    });
+	  // Get contents of first post
+	  xhr({
+		// valuemargin boards:
+		// Use heroku app to get around CORS redirect restriction when TMF redirects this url
+		// https://github.com/Rob--W/cors-anywhere/
+		url: 'https://cors-anywhere.herokuapp.com/' + postLinks[0],
+		dataType: 'jsonp'
+		}, function (err, data) {
+			var post = document.createElement('div');
+			post.insertAdjacentHTML('beforeend', data.body);
+
+			// metadata for post: document.querySelectorAll('.messageMeta .pbnav')
+			// author: document.querySelectorAll('.messageMeta .pbnav')[0].innerText
+			// title: document.querySelectorAll('.messageMeta .pbnav')[2].innerText
+			// date: document.querySelectorAll('.messageMeta .pbnav')[3].innerText
+			// content: document.querySelectorAll('#tableMsg .pbmsg')[0].innerText
+			var metaData = post.querySelectorAll('.messageMeta .pbnav');
+			document.querySelector('#author').innerText = metaData[0].innerText;
+			document.querySelector('#title').innerText = metaData[2].innerText;
+			document.querySelector('#date').innerText = metaData[3].innerText;
+			
+			var content = post.querySelectorAll('#tableMsg .pbmsg');
+			document.querySelector('#content').innerText = content[0].innerText;
+		
+		});
+		
+	});
 	
     this.setState({
       boards: ['http://boards.fool.co.uk/a-fool-and-his-money-51365.aspx?mid=6808140&sort=username']
     });	
+	
   };
 	
   render() {
@@ -56,6 +83,12 @@ class App extends Component {
 			</form>		
 		</div>
 		<div id="contents"></div>
+		<div id="post">
+			<label id="author"></label>
+			<label id="title"></label>
+			<label id="date"></label>
+			<label id="content"></label>
+		</div>
       </div>
     );
   }
