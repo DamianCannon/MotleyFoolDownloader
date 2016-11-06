@@ -6,8 +6,11 @@ import file from 'file-saver';
 class App extends Component {
     state = {
 		boardName: '',
-		userName: 'valuemargin',
-		boardStartLocation: 'http://boards.fool.co.uk/high-yield-hyp-practical-51676.aspx?mid=11105157&sort=username',
+		// userName: 'valuemargin',
+		userName: 'tjh290633',
+		//boardStartLocation: 'http://boards.fool.co.uk/high-yield-hyp-practical-51676.aspx?mid=11105157&sort=username', //valuemargin: lots of posts
+		// boardStartLocation: 'http://boards.fool.co.uk/value-shares-50094.aspx?mid=10315139&sort=username', //valuemargin: less than one page of posts
+		boardStartLocation: 'http://boards.fool.co.uk/bg-group-plc-bg-50206.aspx?mid=6396502&sort=username', //tjh290633: two pages of posts
 		boards: []
    };
   
@@ -19,11 +22,53 @@ class App extends Component {
 		this.saySomething("element clicked");
 	}
 	
+	getListOfPostsAndDownload = (url) => {
+		var self = this;
+		
+		xhr({
+		  // valuemargin boards:
+		  url: url
+		}, function (err, data) {
+		  // Messages in this table: tblMessagesAsp
+		  var element = document.createElement('div');
+		  element.insertAdjacentHTML('beforeend', data.body);
+		  var tableOfPosts = element.querySelector('#tblMessagesAsp');
+		  var nextLink = element.querySelector('.nextLink');
+
+		  // Get the posts if the requested author is in the list of posts
+		  if (tableOfPosts.innerText.includes(self.state.userName)) {
+			  // Show table of posts
+			  var content = document.querySelector('#contents');
+			  content.insertAdjacentElement('beforeend', tableOfPosts);
+			  content.insertAdjacentElement('beforeend', nextLink);
+
+			  // Get list of post links
+			  var postLinks = [...document.querySelectorAll('a')].filter(x => x.href.includes('Message.aspx')).map(h => h.href.replace('localhost:3000', 'boards.fool.co.uk'));
+			  
+			  // Get contents of all posts on this page
+			  postLinks.map(x => self.displayAndSavePostContent(x));
+				
+			  // Now load the next page of links and download after a 5 second delay to allow the file saving to catch up
+			  setTimeout(() => {
+				content.innerHTML = '';
+				document.querySelector('#author').innerText = '';
+				document.querySelector('#title').innerText = '';
+				document.querySelector('#date').innerText = '';
+				document.querySelector('#content').innerText = '';
+				self.getListOfPostsAndDownload(nextLink.href.replace('localhost:3000', 'boards.fool.co.uk'));
+			  }, 5000);
+		  } else {
+			content.innerHTML = '<h2>Finished downloading!</h2>';
+		  }
+		});
+	}
+	
   displayAndSavePostContent = (url) => {
+	var self = this;
+
 	xhr({
-	// Use heroku app to get around CORS redirect restriction when TMF redirects this url
-	// https://github.com/Rob--W/cors-anywhere/
-	url: 'https://cors-anywhere.herokuapp.com/' + url
+		// Use heroku app to get around CORS redirect restriction when TMF redirects this url - https://github.com/Rob--W/cors-anywhere/
+		url: 'https://cors-anywhere.herokuapp.com/' + url
 	}, function (err, data) {
 		// Get post html in a queryable state
 		var post = document.createElement('div');
@@ -37,14 +82,23 @@ class App extends Component {
 		document.querySelector('#author').innerText = authorName;
 		document.querySelector('#title').innerText = postTitle;
 		document.querySelector('#date').innerText = postDate;
-		
-		// Display post content
-		var content = post.querySelectorAll('#tableMsg .pbmsg')[0].innerText.trim();
-		document.querySelector('#content').innerText = content;
 
-		// Save file to downloads folder with an informative name
-		var blob = new Blob([authorName, '\n', postTitle, '\n', postDate, '\n\n', content], {type: "text/plain;charset=utf-8"});
-		file.saveAs(blob, `${authorName}-${postTitle}-${postDate}.txt`);
+		// Download post content if it's from the author we're looking for
+		if (authorName.replace('Author: ', '') === self.state.userName) {
+			// Display post content
+			var content = post.querySelectorAll('#tableMsg .pbmsg')[0].innerText.trim();
+			document.querySelector('#content').innerText = content;
+
+			// Save file to downloads folder with an informative name
+			var blob = new Blob([authorName, '\n', postTitle, '\n', postDate, '\n\n', content], {type: "text/plain;charset=utf-8"});
+			file.saveAs(blob, `${authorName}-${postTitle}-${postDate}.txt`);
+			
+			// Clear fields
+			// document.querySelector('#author').innerText = '';
+			// document.querySelector('#title').innerText = '';
+			// document.querySelector('#date').innerText = '';
+			// document.querySelector('#content').innerText = '';
+		}
 	});  
   }
  
@@ -69,43 +123,16 @@ class App extends Component {
   fetchData = (evt) => {
     evt.preventDefault();
 	
-	var self = this;
-	
 	// Get board and user names together with a starting point url for the download
 	if (this.state.boardStartLocation === '') return;
-	
-	xhr({
-	  // valuemargin boards:
-      url:  this.state.boardStartLocation
-    }, function (err, data) {
-	  // Messages in this table: tblMessagesAsp
-	  var element = document.createElement('div');
-	  element.insertAdjacentHTML('beforeend', data.body);
-	  var tableOfPosts = element.querySelector('#tblMessagesAsp');
-	  var nextLink = element.querySelector('.nextLink');
-	  
-	  // Show table of posts
-	  var content = document.querySelector('#contents');
-	  content.insertAdjacentElement('beforeend', tableOfPosts);
-	  content.insertAdjacentElement('beforeend', nextLink);
 
-	  // Get the posts if the requested author is in the list of posts
-	  if (tableOfPosts.innerText.includes(self.state.userName)) {
-		  // Get list of post links
-		  var postLinks = [...document.querySelectorAll('a')].filter(x => x.href.includes('Message.aspx')).map(h => h.href.replace('localhost:3000', 'boards.fool.co.uk'));
-		  
-		  // Get contents of all posts on this page
-		  postLinks.map(x => self.displayAndSavePostContent(x));
-	  }
-	
-	});
-	
-    this.setState({
-      boards: ['http://boards.fool.co.uk/a-fool-and-his-money-51365.aspx?mid=6808140&sort=username']
-    });	
-	
+	// Load posts and start the download process
+	this.getListOfPostsAndDownload(this.state.boardStartLocation);
+
+    // this.setState({
+      // boards: ['http://boards.fool.co.uk/a-fool-and-his-money-51365.aspx?mid=6808140&sort=username']
+    // });	
   }
-
   
   render() {
     return (
