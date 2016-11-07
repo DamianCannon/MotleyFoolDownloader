@@ -10,7 +10,7 @@ class App extends Component {
 		userName: 'tjh290633',
 		//boardStartLocation: 'http://boards.fool.co.uk/high-yield-hyp-practical-51676.aspx?mid=11105157&sort=username', //valuemargin: lots of posts
 		// boardStartLocation: 'http://boards.fool.co.uk/value-shares-50094.aspx?mid=10315139&sort=username', //valuemargin: less than one page of posts
-		boardStartLocation: 'http://boards.fool.co.uk/bg-group-plc-bg-50206.aspx?mid=6396502&sort=username', //tjh290633: two pages of posts
+		boardStartLocation: 'http://boards.fool.co.uk/bg-group-plc-bg-50206.aspx?mid=6396502&sort=username', //tjh290633: two pages of posts 
 		boards: []
    };
   
@@ -34,19 +34,19 @@ class App extends Component {
 		  element.insertAdjacentHTML('beforeend', data.body);
 		  var tableOfPosts = element.querySelector('#tblMessagesAsp');
 		  var nextLink = element.querySelector('.nextLink');
-
+		  var boardName = element.querySelector('#breadcrumbWords2').innerText.replace('/', '').replace(/\u00a0/g, '').replace(/\t/g, ' ');
+		  
 		  // Get the posts if the requested author is in the list of posts
 		  if (tableOfPosts.innerText.includes(self.state.userName)) {
 			  // Show table of posts
 			  var content = document.querySelector('#contents');
 			  content.insertAdjacentElement('beforeend', tableOfPosts);
-			  content.insertAdjacentElement('beforeend', nextLink);
 
 			  // Get list of post links
 			  var postLinks = [...document.querySelectorAll('a')].filter(x => x.href.includes('Message.aspx')).map(h => h.href.replace('localhost:3000', 'boards.fool.co.uk'));
 			  
 			  // Get contents of all posts on this page
-			  postLinks.map(x => self.displayAndSavePostContent(x));
+			  postLinks.map(x => self.displayAndSavePostContent(boardName, x));
 				
 			  // Now load the next page of links and download after a 5 second delay to allow the file saving to catch up
 			  setTimeout(() => {
@@ -63,7 +63,7 @@ class App extends Component {
 		});
 	}
 	
-  displayAndSavePostContent = (url) => {
+  displayAndSavePostContent = (boardName, url) => {
 	var self = this;
 
 	xhr({
@@ -91,7 +91,7 @@ class App extends Component {
 
 			// Save file to downloads folder with an informative name
 			var blob = new Blob([authorName, '\n', postTitle, '\n', postDate, '\n\n', content], {type: "text/plain;charset=utf-8"});
-			file.saveAs(blob, `${authorName}-${postTitle}-${postDate}.txt`);
+			file.saveAs(blob, `${boardName}-${authorName}-${postTitle}-${postDate}.txt`);
 			
 			// Clear fields
 			// document.querySelector('#author').innerText = '';
@@ -140,12 +140,12 @@ class App extends Component {
 		<div>
 		<h1>Motley Fool Downloader</h1>
 			<form onSubmit={this.fetchData}>
-			  <label>I want to get the posts from this board
+			  <label>I want to get the posts starting with this link
 				<input 
-					placeholder={"board name"} 
+					placeholder={"link to board"} 
 					type="text" 
-					value={this.state.boardName}
-					onChange={this.changeBoardName}
+					value={this.state.boardStartLocation}
+					onChange={this.changeStartLocation}
 				/>
 			  </label>
 			  <label>for this user
@@ -154,14 +154,6 @@ class App extends Component {
 					type="text" 
 					value={this.state.userName}
 					onChange={this.changeUserName}
-				/>
-			  </label>
-			  <label>starting with this link
-				<input 
-					placeholder={"link to board"} 
-					type="text" 
-					value={this.state.boardStartLocation}
-					onChange={this.changeStartLocation}
 				/>
 			  </label>
 			  <button onClick={this.handleClick.bind(this)}>Get data</button>
