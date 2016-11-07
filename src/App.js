@@ -34,7 +34,7 @@ class App extends Component {
 		  element.insertAdjacentHTML('beforeend', data.body);
 		  var tableOfPosts = element.querySelector('#tblMessagesAsp');
 		  var nextLink = element.querySelector('.nextLink');
-		  var boardName = element.querySelector('#breadcrumbWords2').innerText.replace('/', '').replace(/\u00a0/g, '').replace(/\t/g, ' ');
+		  var boardName = element.querySelector('#breadcrumbWords2').innerText.replace('/', '').replace(/\u00a0/g, '');
 		  
 		  // Get the posts if the requested author is in the list of posts
 		  if (tableOfPosts.innerText.includes(self.state.userName)) {
@@ -144,6 +144,7 @@ class App extends Component {
 				<input 
 					placeholder={"link to board"} 
 					type="text" 
+					size="75"
 					value={this.state.boardStartLocation}
 					onChange={this.changeStartLocation}
 				/>
@@ -152,6 +153,7 @@ class App extends Component {
 				<input 
 					placeholder={"user name"} 
 					type="text" 
+					size="30"
 					value={this.state.userName}
 					onChange={this.changeUserName}
 				/>
