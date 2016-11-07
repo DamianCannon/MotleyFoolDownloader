@@ -40,7 +40,7 @@ class App extends Component {
 			  content.insertAdjacentElement('beforeend', tableOfPosts);
 
 			  // Get list of post links
-			  var postLinks = [...document.querySelectorAll('a')].filter(x => x.href.includes('Message.aspx')).map(h => h.href.replace('localhost:3000', 'boards.fool.co.uk'));
+			  var postLinks = [...document.querySelectorAll('a')].filter(x => x.href.includes('Message.aspx')).map(h => h.href.replace('damiancannon.github.io', 'boards.fool.co.uk'));
 			  
 			  // Get contents of all posts on this page
 			  postLinks.map(x => self.displayAndSavePostContent(boardName, x));
@@ -52,7 +52,7 @@ class App extends Component {
 				document.querySelector('#title').innerText = '';
 				document.querySelector('#date').innerText = '';
 				document.querySelector('#content').innerText = '';
-				self.getListOfPostsAndDownload(nextLink.href.replace('localhost:3000', 'boards.fool.co.uk'));
+				self.getListOfPostsAndDownload(nextLink.href.replace('damiancannon.github.io', 'boards.fool.co.uk'));
 			  }, 5000);
 		  } else {
 			content.innerHTML = '<h2>Finished downloading!</h2>';
