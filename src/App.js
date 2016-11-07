@@ -6,11 +6,12 @@ import file from 'file-saver';
 class App extends Component {
     state = {
 		boardName: '',
-		// userName: 'valuemargin',
-		userName: 'tjh290633',
+		userName: '',
 		//boardStartLocation: 'http://boards.fool.co.uk/high-yield-hyp-practical-51676.aspx?mid=11105157&sort=username', //valuemargin: lots of posts
 		// boardStartLocation: 'http://boards.fool.co.uk/value-shares-50094.aspx?mid=10315139&sort=username', //valuemargin: less than one page of posts
-		boardStartLocation: 'http://boards.fool.co.uk/bg-group-plc-bg-50206.aspx?mid=6396502&sort=username', //tjh290633: two pages of posts 
+		// boardStartLocation: 'http://boards.fool.co.uk/bg-group-plc-bg-50206.aspx?mid=6396502&sort=username', //tjh290633: two pages of posts 
+		// boardStartLocation: 'http://boards.fool.co.uk/anglo-american-plc-aal-50135.aspx?mid=11842215&sort=username', //tjh290633: 1 posts
+		boardStartLocation: '', //tjh290633: 1 posts
 		boards: []
    };
   
@@ -50,11 +51,11 @@ class App extends Component {
 				
 			  // Now load the next page of links and download after a 5 second delay to allow the file saving to catch up
 			  setTimeout(() => {
-				content.innerHTML = '';
-				document.querySelector('#author').innerText = '';
-				document.querySelector('#title').innerText = '';
-				document.querySelector('#date').innerText = '';
-				document.querySelector('#content').innerText = '';
+				// content.innerHTML = '';
+				// document.querySelector('#author').innerText = '';
+				// document.querySelector('#title').innerText = '';
+				// document.querySelector('#date').innerText = '';
+				// document.querySelector('#content').innerText = '';
 				self.getListOfPostsAndDownload(nextLink.href.replace('localhost:3000', 'boards.fool.co.uk'));
 			  }, 5000);
 		  } else {
@@ -143,6 +144,13 @@ class App extends Component {
 		return;
 	}
 
+	// Clear post fields
+	document.querySelector('#contents').innerHTML = '';
+	document.querySelector('#author').innerText = '';
+	document.querySelector('#title').innerText = '';
+	document.querySelector('#date').innerText = '';
+	document.querySelector('#content').innerText = '';
+	
 	// Load posts and start the download process
 	this.getListOfPostsAndDownload(this.state.boardStartLocation);
 
@@ -153,37 +161,86 @@ class App extends Component {
   
   render() {
     return (
-      <div>
-		<div>
-		<h1>Motley Fool Downloader</h1>
+      <div className="page-wrap">
+		<div className="input-fields">
+			<h1>Motley Fool Post Downloader</h1>
+			<h4>This tool is designed to provide a way for registered users of the Motley Fool UK to download and archive the posts they have made to the discussion boards. In order to use the tool you need to provide a link to the board that you're interested in with posts ordered by username. If the author name provided is found in this starting list then the tool will download posts from this author and continue until reaching the next author. The ways to do this from easiest to hardest are:</h4>
+			<h4>1 - Add the author as a Favourite Fool and then select the board that you're interested in -> the url you've just selected is then your starting point</h4>
+			<h4>2 - Open the board that you're interested in and locate a post by the author. Then click on the board name to open the posts view, click on "Author" to sort by author name and click Prev until you get to the first page which includes a post by the author -> the current url is then your starting point</h4>
+			<h4>3 - Open the board that you're interested in and locate a post by someone with a name similar to the author that you want. Then click on the board name to open the posts view, click on "Author" to sort by author name and click Prev until you get to the first page which includes a post by the author -> the current url is then your starting point</h4>
 			<form onSubmit={this.fetchData}>
-			  <label>I want to get the posts starting with this link
-				<input 
-					placeholder={"link to board"} 
-					type="text" 
-					size="75"
-					value={this.state.boardStartLocation}
-					onChange={this.changeStartLocation}
-				/>
-			  </label>
-			  <label>for this user
-				<input 
-					placeholder={"user name"} 
-					type="text" 
-					size="30"
-					value={this.state.userName}
-					onChange={this.changeUserName}
-				/>
-			  </label>
-			  <button onClick={this.handleClick.bind(this)}>Get data</button>
+				<table>
+					<tr>
+						<td>
+						I want to get the posts 
+						</td>
+						<td>
+						</td>
+						<td>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							starting with this link:
+						</td>
+						<td>
+							<input 
+								placeholder={"link to board"} 
+								type="text" 
+								size="100"
+								value={this.state.boardStartLocation}
+								onChange={this.changeStartLocation}
+							/>
+						</td>
+						<td>
+							(e.g. http://boards.fool.co.uk/financial-software-50080.aspx?mid=13107564&sort=username)
+						</td>
+					</tr>
+					<tr>
+						<td>
+						  for this author:
+						</td>
+						<td>
+							<input 
+								placeholder={"author name"} 
+								type="text" 
+								size="100"
+								value={this.state.userName}
+								onChange={this.changeUserName}
+							/>
+						</td>
+						<td>
+							(e.g. RandomAmbler)
+						</td>
+					</tr>
+					<tr>
+						<td>
+						</td>
+						<td>
+							<button onClick={this.handleClick.bind(this)}>Download posts</button>
+						</td>
+						<td>
+						</td>
+					</tr>
+				</table>
 			</form>		
 		</div>
-		<div id="contents"></div>
-		<div id="post">
-			<label id="author"></label>
-			<label id="title"></label>
-			<label id="date"></label>
-			<label id="content"></label>
+		<div className="content-wrap">
+			<div className="posts-table" id="contents"></div>
+			<div className="post-data" id="post">
+				<div className="post-label">
+					<label id="author"></label>
+				</div>
+				<div className="post-label">
+					<label id="title"></label>
+				</div>
+				<div className="post-label">
+					<label id="date"></label>
+				</div>
+				<div className="post-label post-content">
+					<label id="content"></label>
+				</div>
+			</div>
 		</div>
       </div>
     );

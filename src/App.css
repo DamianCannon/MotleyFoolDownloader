@@ -18,7 +18,69 @@
   font-size: large;
 }
 
-@keyframes App-logo-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+.page-wrap {
+	display: flex; 
+	flex-direction: column;
+	justify-content: center;
+}
+
+.content-wrap {
+	display: flex; 
+	flex-direction: row;
+}
+
+.input-fields {
+	padding: 20px;
+	border-color: red;
+	border-width: 2px;
+	border-radius: 2px;
+	
+}
+
+input {
+	padding-left: 5px;
+    padding-right: 5px;
+    border-radius: 3px;
+    border-style: groove;
+    background: aliceblue;
+}
+
+button {
+	border-radius: 2px;
+    border-style: groove;
+    padding-left: 5px;
+    padding-right: 5px;
+	width: 100%;
+}
+
+.posts-table {
+	/* background: blue; */
+	padding: 20px;
+	width: 50%;
+	border: blue;
+    border-width: medium;
+    border-style: double;
+	border-radius: 20px;
+	margin: 10px;
+}
+
+.post-data {
+	/* background: green; */
+	padding: 20px;
+	width: 50%;
+	border: blue;
+    border-width: medium;
+    border-style: double;
+	border-radius: 20px;
+	margin: 10px;
+}
+
+.post-label {
+	padding: 2px;
+	
+}
+
+.post-content {
+	padding-top: 10px;
+	
 }
