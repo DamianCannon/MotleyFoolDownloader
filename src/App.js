@@ -74,7 +74,7 @@ class App extends Component {
 		// Display details of author, title and date for post
 		var metaData = post.querySelectorAll('.messageMeta .pbnav');
 		var authorName = metaData[0].innerText.trim().replace(/\t/g, '').replace('\n', '');
-		var postTitle = metaData[2].innerText.trim().replace(/\t/g, '').replace('\n', '');
+		var postTitle = metaData[2].innerText.trim().replace(/\t/g, '').replace('\n', '').replace('–', '_');
 		var postDate = metaData[3].innerText.trim().replace(/\t/g, '').replace('\n', '').replace('\n', ' ');
 
 		// Download post content if it's from the author we're looking for
