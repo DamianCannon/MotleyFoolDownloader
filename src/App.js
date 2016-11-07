@@ -7,11 +7,7 @@ class App extends Component {
     state = {
 		boardName: '',
 		userName: '',
-		//boardStartLocation: 'http://boards.fool.co.uk/high-yield-hyp-practical-51676.aspx?mid=11105157&sort=username', //valuemargin: lots of posts
-		// boardStartLocation: 'http://boards.fool.co.uk/value-shares-50094.aspx?mid=10315139&sort=username', //valuemargin: less than one page of posts
-		// boardStartLocation: 'http://boards.fool.co.uk/bg-group-plc-bg-50206.aspx?mid=6396502&sort=username', //tjh290633: two pages of posts 
-		// boardStartLocation: 'http://boards.fool.co.uk/anglo-american-plc-aal-50135.aspx?mid=11842215&sort=username', //tjh290633: 1 posts
-		boardStartLocation: '', //tjh290633: 1 posts
+		boardStartLocation: '',
 		boards: []
    };
   
@@ -51,11 +47,11 @@ class App extends Component {
 				
 			  // Now load the next page of links and download after a 5 second delay to allow the file saving to catch up
 			  setTimeout(() => {
-				// content.innerHTML = '';
-				// document.querySelector('#author').innerText = '';
-				// document.querySelector('#title').innerText = '';
-				// document.querySelector('#date').innerText = '';
-				// document.querySelector('#content').innerText = '';
+				content.innerHTML = '';
+				document.querySelector('#author').innerText = '';
+				document.querySelector('#title').innerText = '';
+				document.querySelector('#date').innerText = '';
+				document.querySelector('#content').innerText = '';
 				self.getListOfPostsAndDownload(nextLink.href.replace('localhost:3000', 'boards.fool.co.uk'));
 			  }, 5000);
 		  } else {
@@ -80,25 +76,21 @@ class App extends Component {
 		var authorName = metaData[0].innerText.trim().replace(/\t/g, '').replace('\n', '');
 		var postTitle = metaData[2].innerText.trim().replace(/\t/g, '').replace('\n', '');
 		var postDate = metaData[3].innerText.trim().replace(/\t/g, '').replace('\n', '').replace('\n', ' ');
-		document.querySelector('#author').innerText = authorName;
-		document.querySelector('#title').innerText = postTitle;
-		document.querySelector('#date').innerText = postDate;
 
 		// Download post content if it's from the author we're looking for
 		if (authorName.replace('Author: ', '') === self.state.userName) {
+			// Display details
+			document.querySelector('#author').innerText = authorName;
+			document.querySelector('#title').innerText = postTitle;
+			document.querySelector('#date').innerText = postDate;
+
 			// Display post content
 			var content = post.querySelectorAll('#tableMsg .pbmsg')[0].innerText.trim();
 			document.querySelector('#content').innerText = content;
 
 			// Save file to downloads folder with an informative name
 			var blob = new Blob([authorName, '\n', postTitle, '\n', postDate, '\n\n', content], {type: "text/plain;charset=utf-8"});
-			file.saveAs(blob, `${boardName}-${authorName}-${postTitle}-${postDate}.txt`);
-			
-			// Clear fields
-			// document.querySelector('#author').innerText = '';
-			// document.querySelector('#title').innerText = '';
-			// document.querySelector('#date').innerText = '';
-			// document.querySelector('#content').innerText = '';
+			file.saveAs(blob, `${boardName}_${authorName}_${postTitle}_${postDate}.txt`);
 		}
 	});  
   }
@@ -164,15 +156,15 @@ class App extends Component {
       <div className="page-wrap">
 		<div className="input-fields">
 			<h1>Motley Fool Post Downloader</h1>
-			<h4>This tool is designed to provide a way for registered users of the Motley Fool UK to download and archive the posts they have made to the discussion boards. In order to use the tool you need to provide a link to the board that you're interested in with posts ordered by username. If the author name provided is found in this starting list then the tool will download posts from this author and continue until reaching the next author. The ways to do this from easiest to hardest are:</h4>
-			<h4>1 - Add the author as a Favourite Fool and then select the board that you're interested in -> the url you've just selected is then your starting point</h4>
-			<h4>2 - Open the board that you're interested in and locate a post by the author. Then click on the board name to open the posts view, click on "Author" to sort by author name and click Prev until you get to the first page which includes a post by the author -> the current url is then your starting point</h4>
-			<h4>3 - Open the board that you're interested in and locate a post by someone with a name similar to the author that you want. Then click on the board name to open the posts view, click on "Author" to sort by author name and click Prev until you get to the first page which includes a post by the author -> the current url is then your starting point</h4>
+			<h4>This tool is designed to provide a way for registered users of the <a href="http://www.fool.co.uk/">Motley Fool UK</a> website to download and archive posts that they have made to the <a href="http://boards.fool.co.uk/index.aspx">discussion boards</a>. In order to use the tool you need to provide a link to the board that you're interested in with posts ordered by username. If the author name provided is found in this list then the tool will download posts from this author and continue until reaching the next author. The ways to do this from easiest to hardest are:</h4>
+			<h4>1 - Add the author as a Favourite Fool (see <a href="http://boards.fool.co.uk/FavoriteFools.asp">http://boards.fool.co.uk/FavoriteFools.asp</a>) and then select the board that you're interested in >> the link you've just selected is then your starting point</h4>
+			<h4>2 - Open the board that you're interested in and locate a post by the author. Then click on the board name to open the posts view, click on "Author" to sort by author name and click "Prev" until you get to the first page which includes a post by the author >> the current link is then your starting point</h4>
+			<h4>3 - Open the board that you're interested in and locate a post by someone with a name similar to the author that you want. Then click on the board name to open the posts view, click on "Author" to sort by author name and click "Prev" until you get to the first page which includes a post by the author >> the current link is then your starting point</h4>
 			<form onSubmit={this.fetchData}>
 				<table>
 					<tr>
 						<td>
-						I want to get the posts 
+						I want to get posts 
 						</td>
 						<td>
 						</td>
@@ -185,7 +177,7 @@ class App extends Component {
 						</td>
 						<td>
 							<input 
-								placeholder={"link to board"} 
+								placeholder={"enter link to board here"} 
 								type="text" 
 								size="100"
 								value={this.state.boardStartLocation}
@@ -202,7 +194,7 @@ class App extends Component {
 						</td>
 						<td>
 							<input 
-								placeholder={"author name"} 
+								placeholder={"enter author name here"} 
 								type="text" 
 								size="100"
 								value={this.state.userName}
@@ -217,7 +209,7 @@ class App extends Component {
 						<td>
 						</td>
 						<td>
-							<button onClick={this.handleClick.bind(this)}>Download posts</button>
+							<button onClick={this.handleClick.bind(this)}>Click here to download posts</button>
 						</td>
 						<td>
 						</td>
