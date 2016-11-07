@@ -123,8 +123,25 @@ class App extends Component {
   fetchData = (evt) => {
     evt.preventDefault();
 	
-	// Get board and user names together with a starting point url for the download
+	// Get user name and a starting point url for the download
 	if (this.state.boardStartLocation === '') return;
+	if (this.state.userName === '') return;
+	
+	// Validate that the starting point url is valid
+	if (this.state.boardStartLocation.startsWith('http://boards.fool.co.uk/') === false) {
+		window.alert('Link for board must start with "http://boards.fool.co.uk/"');
+		return;
+	}
+	
+	if (this.state.boardStartLocation.includes('mid=') === false) {
+		window.alert('Link for board must contain a message ID');
+		return;
+	}
+
+	if (this.state.boardStartLocation.endsWith('&sort=username') === false) {
+		window.alert('Link for board must sort posts by username');
+		return;
+	}
 
 	// Load posts and start the download process
 	this.getListOfPostsAndDownload(this.state.boardStartLocation);
