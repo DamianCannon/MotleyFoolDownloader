@@ -20,7 +20,9 @@ class App extends Component {
 	}
 	
 	getListOfPostsAndDownload = (url) => {
-		var self = this;
+		const self = this;
+		// const deployLocation = 'localhost:3000'; // Local testing
+		const deployLocation = 'damiancannon.github.io'; // Production deployment
 		
 		xhr({
 		  // valuemargin boards:
@@ -40,7 +42,7 @@ class App extends Component {
 			  content.insertAdjacentElement('beforeend', tableOfPosts);
 
 			  // Get list of post links
-			  var postLinks = [...document.querySelectorAll('a')].filter(x => x.href.includes('Message.aspx')).map(h => h.href.replace('damiancannon.github.io', 'boards.fool.co.uk'));
+			  var postLinks = [...document.querySelectorAll('a')].filter(x => x.href.includes('Message.aspx')).map(h => h.href.replace(deployLocation, 'boards.fool.co.uk'));
 			  
 			  // Get contents of all posts on this page
 			  postLinks.map(x => self.displayAndSavePostContent(boardName, x));
@@ -52,7 +54,7 @@ class App extends Component {
 				document.querySelector('#title').innerText = '';
 				document.querySelector('#date').innerText = '';
 				document.querySelector('#content').innerText = '';
-				self.getListOfPostsAndDownload(nextLink.href.replace('damiancannon.github.io', 'boards.fool.co.uk'));
+				self.getListOfPostsAndDownload(nextLink.href.replace(deployLocation, 'boards.fool.co.uk'));
 			  }, 5000);
 		  } else {
 			content.innerHTML = '<h2>Finished downloading!</h2>';
@@ -73,24 +75,26 @@ class App extends Component {
 
 		// Display details of author, title and date for post
 		var metaData = post.querySelectorAll('.messageMeta .pbnav');
-		var authorName = metaData[0].innerText.trim().replace(/\t/g, '').replace('\n', '');
-		var postTitle = metaData[2].innerText.trim().replace(/\t/g, '').replace('\n', '').replace('–', '_');
-		var postDate = metaData[3].innerText.trim().replace(/\t/g, '').replace('\n', '').replace('\n', ' ');
+		if (metaData.length > 0) {
+			var authorName = metaData[0].innerText.trim().replace(/\t/g, '').replace('\n', '');
+			var postTitle = metaData[2].innerText.trim().replace(/\t/g, '').replace('\n', '').replace('–', '_');
+			var postDate = metaData[3].innerText.trim().replace(/\t/g, '').replace('\n', '').replace('\n', ' ');
 
-		// Download post content if it's from the author we're looking for
-		if (authorName.replace('Author: ', '') === self.state.userName) {
-			// Display details
-			document.querySelector('#author').innerText = authorName;
-			document.querySelector('#title').innerText = postTitle;
-			document.querySelector('#date').innerText = postDate;
+			// Download post content if it's from the author we're looking for
+			if (authorName.replace('Author: ', '') === self.state.userName) {
+				// Display details
+				document.querySelector('#author').innerText = authorName;
+				document.querySelector('#title').innerText = postTitle;
+				document.querySelector('#date').innerText = postDate;
 
-			// Display post content
-			var content = post.querySelectorAll('#tableMsg .pbmsg')[0].innerText.trim();
-			document.querySelector('#content').innerText = content;
+				// Display post content
+				var content = post.querySelectorAll('#tableMsg .pbmsg')[0].innerText.trim();
+				document.querySelector('#content').innerText = content;
 
-			// Save file to downloads folder with an informative name
-			var blob = new Blob([authorName, '\n', postTitle, '\n', postDate, '\n\n', content], {type: "text/plain;charset=utf-8"});
-			file.saveAs(blob, `${boardName}_${authorName}_${postTitle}_${postDate}.txt`);
+				// Save file to downloads folder with an informative name
+				var blob = new Blob([authorName, '\n', postTitle, '\n', postDate, '\n\n', content], {type: "text/plain;charset=utf-8"});
+				file.saveAs(blob, `${boardName}_${authorName}_${postTitle}_${postDate}.txt`);
+			}			
 		}
 	});  
   }
@@ -119,6 +123,14 @@ class App extends Component {
 	// Get user name and a starting point url for the download
 	if (this.state.boardStartLocation === '') return;
 	if (this.state.userName === '') return;
+
+	// Use secure protocol so that proxy redirect works properly
+	if (this.state.boardStartLocation.startsWith('http://boards.fool.co.uk/') === true) {
+		const httpsLocation = this.state.boardStartLocation.replace('http://', 'https://');
+		this.setState({
+		  boardStartLocation: httpsLocation
+		});
+	}
 	
 	// Validate that the starting point url is valid
 	if (this.state.boardStartLocation.startsWith('https://boards.fool.co.uk/') === false) {
@@ -177,7 +189,7 @@ class App extends Component {
 						</td>
 						<td>
 							<input 
-								placeholder={"enter https (not http please) link to board here"} 
+								placeholder={"enter link to board here"} 
 								type="text" 
 								size="100"
 								value={this.state.boardStartLocation}
