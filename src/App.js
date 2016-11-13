@@ -28,7 +28,7 @@ class App extends Component {
 		  element.insertAdjacentHTML('beforeend', data.body);
 		  var tableOfPosts = element.querySelector('#tblMessagesAsp');
 		  var nextLink = element.querySelector('.nextLink');
-		  var boardName = element.querySelector('#breadcrumbWords2').innerText.replace('/', '').replace(/\u00a0/g, '').trim();
+		  var boardName = element.querySelector('#breadcrumbWords2').innerText.replace('/', '').replace(/\u00a0/g, '').trim().replace(/ +/g, ' ');
 		  
 		  // Get the posts if the requested author is in the list of posts
 		  const content = document.querySelector('#contents');
@@ -66,7 +66,7 @@ class App extends Component {
 	}
 	
   displayAndSavePostContent = (boardName, zip, url, isLastPostOnPage) => {
-	var self = this;
+	const self = this;
 	let stillProcessing = true;
 
 	xhr({
@@ -74,15 +74,16 @@ class App extends Component {
 		url: 'https://cors-anywhere.herokuapp.com/' + url
 	}, function (err, data) {
 		// Get post html in a queryable state
-		var post = document.createElement('div');
+		const post = document.createElement('div');
 		post.insertAdjacentHTML('beforeend', data.body);
 
 		// Display details of author, title and date for post
-		var metaData = post.querySelectorAll('.messageMeta .pbnav');
+		const metaData = post.querySelectorAll('.messageMeta .pbnav');
 		if (metaData.length > 0) {
-			var authorName = metaData[0].innerText.trim().replace(/\t/g, '').replace('\n', '');
-			var postTitle = metaData[2].innerText.trim().replace(/\t/g, '').replace('\n', '').replace('–', '_');
-			var postDate = metaData[3].innerText.trim().replace(/\t/g, '').replace('\n', '').replace('\n', ' ');
+			const authorName = metaData[0].innerText.trim().replace(/\t/g, '').replace('\n', '');
+			const postNumber = metaData[1].querySelector('.tcforms').value;
+			const postTitle = metaData[2].innerText.trim().replace(/\t/g, '').replace('\n', '').replace('–', '_');
+			const postDate = metaData[3].innerText.trim().replace(/\t/g, '').replace('\n', '').replace('\n', ' ');
 		
 			// Download post content if it's from the author we're looking for
 			if (authorName.replace('Author: ', '') === self.state.userName) {
@@ -97,7 +98,7 @@ class App extends Component {
 
 				// Add post to zip archive
 				const postContent = `${authorName}\n${postTitle}\n${postDate}\n\n${content}`;
-				const fileName = sanitize(`${postTitle.replace('Subject: ', '')} ${postDate.replace('Date: ', '')}.txt`);
+				const fileName = sanitize(`${postNumber} ${postTitle.replace('Subject: ', '')} ${postDate.replace('Date: ', '')}.txt`);
 				zip.file(fileName, postContent);
 			} else {
 				document.querySelector('#author').innerHTML = `<b>Last post reached for ${self.state.userName}</b>`;
@@ -112,7 +113,7 @@ class App extends Component {
 		if (isLastPostOnPage === true && stillProcessing === false) {
 			zip.generateAsync({type:"blob"})
 			.then(function (blob) {
-				const zipName = sanitize(`${boardName}_${self.state.userName}.zip`);
+				const zipName = sanitize(`${boardName} ${self.state.userName}.zip`);
 				file.saveAs(blob, zipName);
 				
 				document.querySelector('#contents').innerHTML = '<b>Download completed</b>';
