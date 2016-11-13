@@ -84,6 +84,7 @@ class App extends Component {
 			const postNumber = metaData[1].querySelector('.tcforms').value;
 			const postTitle = metaData[2].innerText.trim().replace(/\t/g, '').replace('\n', '').replace('–', '_');
 			const postDate = metaData[3].innerText.trim().replace(/\t/g, '').replace('\n', '').replace('\n', ' ');
+			const recCount = post.querySelector('.smalltext').innerText.trim();
 		
 			// Download post content if it's from the author we're looking for
 			if (authorName.replace('Author: ', '') === self.state.userName) {
@@ -97,7 +98,7 @@ class App extends Component {
 				document.querySelector('#content').innerText = content;
 
 				// Add post to zip archive
-				const postContent = `${authorName}\n${postTitle}\n${postDate}\n\n${content}`;
+				const postContent = `${authorName}\n${postTitle}\n${postDate}\n${recCount}\n\n${content}`;
 				const fileName = sanitize(`${postNumber} ${postTitle.replace('Subject: ', '')} ${postDate.replace('Date: ', '')}.txt`);
 				zip.file(fileName, postContent);
 			} else {
