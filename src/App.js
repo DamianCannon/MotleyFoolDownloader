@@ -2,6 +2,8 @@ import React, { Component } from 'react';
 import './App.css';
 import xhr from 'xhr';
 import file from 'file-saver';
+import JSZip from 'jszip';
+import sanitize from 'sanitize-filename';
 
 class App extends Component {
     state = {
@@ -10,19 +12,13 @@ class App extends Component {
 		boardStartLocation: '',
 		boards: []
    };
-  
-	saySomething(something) {
-		console.log(something);
-	}
-
-	handleClick(e) {
-		this.saySomething("element clicked");
-	}
 	
-	getListOfPostsAndDownload = (url) => {
+	getListOfPostsAndDownload = (url, zip) => {
 		const self = this;
-		//const deployLocation = 'localhost:3000'; // Local testing
-		const deployLocation = 'damiancannon.github.io'; // Production deployment
+		const deployLocation = 'localhost:3000'; // Local testing
+		//const deployLocation = 'damiancannon.github.io'; // Production deployment
+		
+		document.querySelector('#contents').innerHTML = '<b>Loading list of posts...</b>';
 		
 		xhr({
 		  url: url
@@ -32,35 +28,46 @@ class App extends Component {
 		  element.insertAdjacentHTML('beforeend', data.body);
 		  var tableOfPosts = element.querySelector('#tblMessagesAsp');
 		  var nextLink = element.querySelector('.nextLink');
-		  var boardName = element.querySelector('#breadcrumbWords2').innerText.replace('/', '').replace(/\u00a0/g, '');
+		  var boardName = element.querySelector('#breadcrumbWords2').innerText.replace('/', '').replace(/\u00a0/g, '').trim();
 		  
 		  // Get the posts if the requested author is in the list of posts
+		  const content = document.querySelector('#contents');
 		  if (tableOfPosts.innerText.includes(self.state.userName)) {
 			  // Show table of posts
-			  var content = document.querySelector('#contents');
+			  content.innerHTML = '';
 			  content.insertAdjacentElement('beforeend', tableOfPosts);
 
 			  // Get list of post links
 			  var postLinks = [...document.querySelectorAll('a')].filter(x => x.href.includes('Message.aspx')).map(h => h.href.replace(deployLocation, 'boards.fool.co.uk'));
 			  
 			  // Get contents of all posts on this page
-			  postLinks.map(x => self.displayAndSavePostContent(boardName, x));
-				
-			  // Now load the next page of links and download after a 5 second delay to allow the file saving to catch up
-			  setTimeout(() => {
-				content.innerHTML = '';
-				document.querySelector('#author').innerText = '';
-				document.querySelector('#title').innerText = '';
-				document.querySelector('#date').innerText = '';
-				document.querySelector('#content').innerText = '';
-				self.getListOfPostsAndDownload(nextLink.href.replace(deployLocation, 'boards.fool.co.uk'));
-			  }, 5000);
+			  let isLastPostOnPage = false;
+			  for (let i=0; i<postLinks.length; i++) {
+				setTimeout(() => {
+					console.log('doing item ' + i + ': ' + postLinks[i]);
+					isLastPostOnPage = i === postLinks.length-1;
+					self.displayAndSavePostContent(boardName, zip, postLinks[i], isLastPostOnPage);
+					
+					if (isLastPostOnPage === true) {
+						setTimeout(() => {
+						  // Now load the next page of links
+						  content.innerHTML = '';
+						  self.getListOfPostsAndDownload(nextLink.href.replace(deployLocation, 'boards.fool.co.uk'), zip);
+						}, i*500 );				
+					}
+				}, i*500 );	
+			  }
+		  } else {
+			  if (document.querySelector('#author').innerText.length === 0) {
+				content.innerHTML = `<b>Author name ${self.state.userName} not found!</b>`;
+			  }
 		  }
 		});
 	}
 	
-  displayAndSavePostContent = (boardName, url) => {
+  displayAndSavePostContent = (boardName, zip, url, isLastPostOnPage) => {
 	var self = this;
+	let stillProcessing = true;
 
 	xhr({
 		// Use heroku app to get around CORS redirect restriction when TMF redirects this url - https://github.com/Rob--W/cors-anywhere/
@@ -76,7 +83,7 @@ class App extends Component {
 			var authorName = metaData[0].innerText.trim().replace(/\t/g, '').replace('\n', '');
 			var postTitle = metaData[2].innerText.trim().replace(/\t/g, '').replace('\n', '').replace('–', '_');
 			var postDate = metaData[3].innerText.trim().replace(/\t/g, '').replace('\n', '').replace('\n', ' ');
-
+		
 			// Download post content if it's from the author we're looking for
 			if (authorName.replace('Author: ', '') === self.state.userName) {
 				// Display details
@@ -88,10 +95,28 @@ class App extends Component {
 				var content = post.querySelectorAll('#tableMsg .pbmsg')[0].innerText.trim();
 				document.querySelector('#content').innerText = content;
 
-				// Save file to downloads folder with an informative name
-				var blob = new Blob([authorName, '\n', postTitle, '\n', postDate, '\n\n', content], {type: "text/plain;charset=utf-8"});
-				file.saveAs(blob, `${boardName}_${authorName}_${postTitle}_${postDate}.txt`);
-			}			
+				// Add post to zip archive
+				const postContent = `${authorName}\n${postTitle}\n${postDate}\n\n${content}`;
+				const fileName = sanitize(`${postTitle.replace('Subject: ', '')} ${postDate.replace('Date: ', '')}.txt`);
+				zip.file(fileName, postContent);
+			} else {
+				document.querySelector('#author').innerHTML = `<b>Last post reached for ${self.state.userName}</b>`;
+				document.querySelector('#title').innerText = '';
+				document.querySelector('#date').innerText = '';
+				document.querySelector('#content').innerText = '';
+				stillProcessing = false;
+			}		
+		}
+
+		// Save zip archive locally if there are no more posts to download
+		if (isLastPostOnPage === true && stillProcessing === false) {
+			zip.generateAsync({type:"blob"})
+			.then(function (blob) {
+				const zipName = sanitize(`${boardName}_${self.state.userName}.zip`);
+				file.saveAs(blob, zipName);
+				
+				document.querySelector('#contents').innerHTML = '<b>Download completed</b>';
+			});
 		}
 	});  
   }
@@ -251,10 +276,13 @@ class App extends Component {
 	document.querySelector('#title').innerText = '';
 	document.querySelector('#date').innerText = '';
 	document.querySelector('#content').innerText = '';
+
+	// Create a zip archive for the posts
+	const zip = new JSZip();
 	
 	// Load posts and start the download process
-	this.getListOfPostsAndDownload(this.state.boardStartLocation);
-
+	this.getListOfPostsAndDownload(this.state.boardStartLocation, zip);
+	
     // this.setState({
       // boards: ['http://boards.fool.co.uk/a-fool-and-his-money-51365.aspx?mid=6808140&sort=username']
     // });	
@@ -318,7 +346,7 @@ class App extends Component {
 						<td>
 						</td>
 						<td>
-							<button onClick={this.handleClick.bind(this)}>Click here to download posts</button>
+							<button>Click here to download posts</button>
 						</td>
 						<td>
 						</td>
