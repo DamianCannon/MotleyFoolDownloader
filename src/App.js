@@ -15,8 +15,8 @@ class App extends Component {
 	
 	getListOfPostsAndDownload = (url, zip) => {
 		const self = this;
-		const deployLocation = 'localhost:3000'; // Local testing
-		//const deployLocation = 'damiancannon.github.io'; // Production deployment
+		// const deployLocation = 'localhost:3000'; // Local testing
+		const deployLocation = 'damiancannon.github.io'; // Production deployment
 		
 		document.querySelector('#contents').innerHTML = '<b>Loading list of posts...</b>';
 		
