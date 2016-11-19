@@ -44,7 +44,6 @@ class App extends Component {
 			  let isLastPostOnPage = false;
 			  for (let i=0; i<postLinks.length; i++) {
 				setTimeout(() => {
-					console.log('doing item ' + i + ': ' + postLinks[i]);
 					isLastPostOnPage = i === postLinks.length-1;
 					self.displayAndSavePostContent(boardName, zip, postLinks[i], isLastPostOnPage);
 					
@@ -53,9 +52,9 @@ class App extends Component {
 						  // Now load the next page of links
 						  content.innerHTML = '';
 						  self.getListOfPostsAndDownload(nextLink.href.replace(deployLocation, 'boards.fool.co.uk'), zip);
-						}, i*500 );				
+						}, i*250 );				
 					}
-				}, i*500 );	
+				}, i*250 );	
 			  }
 		  } else {
 			  if (document.querySelector('#author').innerText.length === 0) {
@@ -71,54 +70,64 @@ class App extends Component {
 
 	xhr({
 		// Use heroku app to get around CORS redirect restriction when TMF redirects this url - https://github.com/Rob--W/cors-anywhere/
-		url: 'https://cors-anywhere.herokuapp.com/' + url
+		// url: 'https://cors-anywhere.herokuapp.com/' + url
+		url: url
 	}, function (err, data) {
-		// Get post html in a queryable state
-		const post = document.createElement('div');
-		post.insertAdjacentHTML('beforeend', data.body);
+		if (data.statusCode === 200) {
+			// Get post html in a queryable state
+			const post = document.createElement('div');
+			post.insertAdjacentHTML('beforeend', data.body);
 
-		// Display details of author, title and date for post
-		const metaData = post.querySelectorAll('.messageMeta .pbnav');
-		if (metaData.length > 0) {
-			const authorName = metaData[0].innerText.trim().replace(/\t/g, '').replace('\n', '');
-			const postNumber = metaData[1].querySelector('.tcforms').value;
-			const postTitle = metaData[2].innerText.trim().replace(/\t/g, '').replace('\n', '').replace('–', '_');
-			const postDate = metaData[3].innerText.trim().replace(/\t/g, '').replace('\n', '').replace('\n', ' ');
-			const recCount = post.querySelector('.smalltext').innerText.trim();
-		
-			// Download post content if it's from the author we're looking for
-			if (authorName.replace('Author: ', '') === self.state.userName) {
-				// Display details
-				document.querySelector('#author').innerText = authorName;
-				document.querySelector('#title').innerText = postTitle;
-				document.querySelector('#date').innerText = postDate;
+			// Display details of author, title and date for post
+			const metaData = post.querySelectorAll('.messageMeta .pbnav');
+			if (metaData.length > 0) {
+				const authorName = metaData[0].innerText.trim().replace(/\t/g, '').replace('\n', '');
+				const postNumber = metaData[1].querySelector('.tcforms').value;
+				const postTitle = metaData[2].innerText.trim().replace(/\t/g, '').replace('\n', '').replace('–', '_');
+				const postDate = metaData[3].innerText.trim().replace(/\t/g, '').replace('\n', '').replace('\n', ' ');
+				const recCount = post.querySelector('.smalltext').innerText.trim();
+			
+				// Download post content if it's from the author we're looking for
+				if (authorName.replace('Author: ', '') === self.state.userName) {
+					// Display details
+					document.querySelector('#author').innerText = authorName;
+					document.querySelector('#title').innerText = postTitle;
+					document.querySelector('#date').innerText = postDate;
 
-				// Display post content
-				var content = post.querySelectorAll('#tableMsg .pbmsg')[0].innerText.trim();
-				document.querySelector('#content').innerText = content;
+					// Display post content
+					var content = post.querySelectorAll('#tableMsg .pbmsg')[0].innerText.trim();
+					document.querySelector('#content').innerText = content;
 
-				// Add post to zip archive
-				const postContent = `${authorName}\n${postTitle}\n${postDate}\n${recCount}\n\n${content}`;
-				const fileName = sanitize(`${postNumber} ${postTitle.replace('Subject: ', '')} ${postDate.replace('Date: ', '')}.txt`);
-				zip.file(fileName, postContent);
-			} else {
-				document.querySelector('#author').innerHTML = `<b>Last post reached for ${self.state.userName}</b>`;
-				document.querySelector('#title').innerText = '';
-				document.querySelector('#date').innerText = '';
-				document.querySelector('#content').innerText = '';
-				stillProcessing = false;
-			}		
-		}
+					// Add post to zip archive
+					const postContent = `${authorName}\n${postTitle}\n${postDate}\n${recCount}\n\n${content}`;
+					const fileName = sanitize(`${postNumber} ${postTitle.replace('Subject: ', '')} ${postDate.replace('Date: ', '')}.txt`);
+					zip.file(fileName, postContent);
+				} else {
+					document.querySelector('#author').innerHTML = `<b>Last post reached for ${self.state.userName}</b>`;
+					document.querySelector('#title').innerText = '';
+					document.querySelector('#date').innerText = '';
+					document.querySelector('#content').innerText = '';
+					stillProcessing = false;
+				}		
+			}
 
-		// Save zip archive locally if there are no more posts to download
-		if (isLastPostOnPage === true && stillProcessing === false) {
-			zip.generateAsync({type:"blob"})
-			.then(function (blob) {
-				const zipName = sanitize(`${boardName} ${self.state.userName}.zip`);
-				file.saveAs(blob, zipName);
-				
-				document.querySelector('#contents').innerHTML = '<b>Download completed</b>';
-			});
+			// Save zip archive locally if there are no more posts to download
+			if (isLastPostOnPage === true && stillProcessing === false) {
+				zip.generateAsync({type:"blob"})
+				.then(function (blob) {
+					const zipName = sanitize(`${boardName} ${self.state.userName}.zip`);
+					file.saveAs(blob, zipName);					
+					document.querySelector('#contents').innerHTML = '<b>Download completed</b>';
+				});
+			}
+		} else {
+			// Try loading via a CORS proxy to see if this is a blocked redirect problem
+			console.log(`There was a problem loading post ${url}`);
+			if (data.statusCode === 0) {
+				console.log('Now trying to download via crossorigin.me proxy');
+				const redirectUrl = 'https://crossorigin.me/' + url;
+				self.displayAndSavePostContent(boardName, zip, redirectUrl, isLastPostOnPage);
+			}
 		}
 	});  
   }
