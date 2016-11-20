@@ -19,7 +19,7 @@ class App extends Component {
 		const deployLocation = 'damiancannon.github.io'; // Production deployment
 	
 		xhr({
-		  url: url
+		  url: url.replace('http:', 'https:')
 		}, function (err, data) {
 		  // Messages in this table: tblMessagesAsp
 		  var element = document.createElement('div');
@@ -67,7 +67,7 @@ class App extends Component {
 	let stillProcessing = true;
 
 	xhr({
-		url: url
+		url: url.replace('http:', 'https:')
 	}, function (err, data) {
 		if (data.statusCode === 200) {
 			// Get post html in a queryable state
