@@ -15,8 +15,8 @@ class App extends Component {
 	
 	getListOfPostsAndDownload = (url, zip) => {
 		const self = this;
-		const deployLocation = 'localhost:3000'; // Local testing
-		//const deployLocation = 'damiancannon.github.io'; // Production deployment
+		// const deployLocation = 'localhost:3000'; // Local testing
+		const deployLocation = 'damiancannon.github.io'; // Production deployment
 	
 		xhr({
 		  url: url
@@ -67,8 +67,6 @@ class App extends Component {
 	let stillProcessing = true;
 
 	xhr({
-		// Use heroku app to get around CORS redirect restriction when TMF redirects this url - https://github.com/Rob--W/cors-anywhere/
-		// url: 'https://cors-anywhere.herokuapp.com/' + url
 		url: url
 	}, function (err, data) {
 		if (data.statusCode === 200) {
@@ -123,7 +121,7 @@ class App extends Component {
 			console.log(`There was a problem loading post ${url}`);
 			if (data.statusCode === 0) {
 				console.log('Now trying to download via crossorigin.me proxy');
-				const redirectUrl = 'https://crossorigin.me/' + url;
+				const redirectUrl = 'https://crossorigin.me/' + url.replace('http:', 'https:');
 				self.displayAndSavePostContent(boardName, zip, redirectUrl, isLastPostOnPage);
 			}
 		}
@@ -254,20 +252,6 @@ class App extends Component {
 	// Get user name and a starting point url for the download
 	if (this.state.boardStartLocation === '') return;
 	if (this.state.userName === '') return;
-
-	// Use secure protocol so that proxy redirect works properly
-	if (this.state.boardStartLocation.startsWith('http://boards.fool.co.uk/') === true) {
-		const httpsLocation = this.state.boardStartLocation.replace('http://', 'https://');
-		this.setState({
-		  boardStartLocation: httpsLocation
-		});
-	}
-	
-	// Validate that the starting point url is valid
-	if (this.state.boardStartLocation.startsWith('https://boards.fool.co.uk/') === false) {
-		window.alert('Link for board must start with "https://boards.fool.co.uk/"');
-		return;
-	}
 	
 	if (this.state.boardStartLocation.includes('mid=') === false) {
 		window.alert('Link for board must contain a message ID');
@@ -330,7 +314,7 @@ class App extends Component {
 							/>
 						</td>
 						<td>
-							(e.g. https://boards.fool.co.uk/financial-software-50080.aspx?mid=13107564&sort=username)
+							(e.g. http://boards.fool.co.uk/financial-software-50080.aspx?mid=13107564&sort=username)
 						</td>
 					</tr>
 					<tr>
