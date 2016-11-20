@@ -15,11 +15,9 @@ class App extends Component {
 	
 	getListOfPostsAndDownload = (url, zip) => {
 		const self = this;
-		// const deployLocation = 'localhost:3000'; // Local testing
-		const deployLocation = 'damiancannon.github.io'; // Production deployment
-		
-		document.querySelector('#contents').innerHTML = '<b>Loading list of posts...</b>';
-		
+		const deployLocation = 'localhost:3000'; // Local testing
+		//const deployLocation = 'damiancannon.github.io'; // Production deployment
+	
 		xhr({
 		  url: url
 		}, function (err, data) {
@@ -32,7 +30,7 @@ class App extends Component {
 		  
 		  // Get the posts if the requested author is in the list of posts
 		  const content = document.querySelector('#contents');
-		  if (tableOfPosts.innerText.includes(self.state.userName)) {
+		  if (tableOfPosts.innerText.includes(self.state.userName) || document.querySelector('#content').innerText.length > 0) {
 			  // Show table of posts
 			  content.innerHTML = '';
 			  content.insertAdjacentElement('beforeend', tableOfPosts);
@@ -304,10 +302,9 @@ class App extends Component {
       <div className="page-wrap">
 		<div className="input-fields">
 			<h1>Motley Fool Post Downloader</h1>
-			<h4>This tool is designed to provide a way for registered users of the <a href="http://www.fool.co.uk/">Motley Fool UK</a> website to download and archive posts that they have made to the <a href="http://boards.fool.co.uk/index.aspx">discussion boards</a>. In order to use the tool you need to provide a link to the board that you're interested in with posts ordered by username. If the author name provided is found in this list then the tool will download posts from this author and continue until reaching the next author. The ways to do this from easiest to hardest are:</h4>
-			<h4>1 - Add the author as a Favourite Fool (see <a href="http://boards.fool.co.uk/FavoriteFools.asp">http://boards.fool.co.uk/FavoriteFools.asp</a>) and then select the board that you're interested in >> the link you've just selected is then your starting point</h4>
-			<h4>2 - Open the board that you're interested in and locate a post by the author. Then click on the board name to open the posts view, click on "Author" to sort by author name and click "Prev" until you get to the first page which includes a post by the author >> the current link is then your starting point</h4>
-			<h4>3 - Open the board that you're interested in and locate a post by someone with a name similar to the author that you want. Then click on the board name to open the posts view, click on "Author" to sort by author name and click "Prev" until you get to the first page which includes a post by the author >> the current link is then your starting point</h4>
+			<h4>This tool is designed to provide a way for users of the <a href="http://www.fool.co.uk/">Motley Fool UK</a> website to download and archive posts that they have made to the <a href="http://boards.fool.co.uk/index.aspx">discussion boards</a>. In order to use the tool you need to provide a link to the board that you're interested in with posts ordered by username. If the author name provided is found in this list then the tool will download posts from this author and continue until reaching the next author. The ways to do this from easiest to hardest are:</h4>
+			<h4>1 - Open the board that you're interested in and locate a post by the author you want. Then click on the board name to open the posts view, click on "Author" to sort by author name and click "Prev" until you get to the first page which includes a post by the author >> the current link is then your starting point</h4>
+			<h4>2 - Open the board that you're interested in and locate a post by someone with a name similar to the author that you want. Then click on the board name to open the posts view, click on "Author" to sort by author name and click "Prev" until you get to the first page which includes a post by the author >> the current link is then your starting point</h4>
 			<form onSubmit={this.fetchData}>
 				<table>
 					<tr>
