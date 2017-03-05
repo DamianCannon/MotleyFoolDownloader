@@ -12,12 +12,12 @@ class App extends Component {
 		boardStartLocation: '',
 		boards: []
    };
-	
+
 	getListOfPostsAndDownload = (url, zip) => {
 		const self = this;
-		// const deployLocation = 'localhost:3000'; // Local testing
+		//const deployLocation = 'localhost:3000'; // Local testing
 		const deployLocation = 'damiancannon.github.io'; // Production deployment
-	
+
 		xhr({
 		  url: url.replace('http:', 'https:')
 		}, function (err, data) {
@@ -27,7 +27,7 @@ class App extends Component {
 		  var tableOfPosts = element.querySelector('#tblMessagesAsp');
 		  var nextLink = element.querySelector('.nextLink');
 		  var boardName = element.querySelector('#breadcrumbWords2').innerText.replace('/', '').replace(/\u00a0/g, '').trim().replace(/ +/g, ' ');
-		  
+
 		  // Get the posts if the requested author is in the list of posts
 		  const content = document.querySelector('#contents');
 		  if (tableOfPosts.innerText.includes(self.state.userName) || document.querySelector('#content').innerText.length > 0) {
@@ -37,7 +37,7 @@ class App extends Component {
 
 			  // Get list of post links
 			  var postLinks = [...document.querySelectorAll('a')].filter(x => x.href.includes('Message.aspx')).map(h => h.href.replace(deployLocation, 'boards.fool.co.uk'));
-			  
+
 			  // Get contents of all posts on this page
 			  let isLastPostOnPage = false;
 			  for (let i=0; i<postLinks.length; i++) {
@@ -75,12 +75,16 @@ class App extends Component {
 			post.insertAdjacentHTML('beforeend', data.body);
 
 			// Display details of author, title and date for post
-			const metaData = post.querySelectorAll('.messageMeta .pbnav');
-			if (metaData.length > 0) {
-				const authorName = metaData[0].innerText.trim().replace(/\t/g, '').replace('\n', '');
-				const postNumber = metaData[1].querySelector('.tcforms').value;
-				const postTitle = metaData[2].innerText.trim().replace(/\t/g, '').replace('\n', '').replace('–', '_');
-				const postDate = metaData[3].innerText.trim().replace(/\t/g, '').replace('\n', '').replace('\n', ' ');
+			const authorData = post.querySelector('.msgAuthorAndCharms').innerText;
+			const titleData = post.querySelector('.msgSubject').innerText;
+			const dateData = post.querySelector('.msgDate').innerText;
+			const numberData = post.querySelector('.tcforms').value;
+
+			if (titleData.length > 0) {
+				const authorName = authorData.trim().replace(/\t/g, '').replace('\n', '');
+				const postNumber = numberData;
+				const postTitle = titleData.trim().replace(/\t/g, '').replace('\n', '').replace('–', '_');
+				const postDate = dateData.trim().replace(/\t/g, '').replace('\n', '').replace('\n', ' ');
 				const recCount = post.querySelector('.smalltext').innerText.trim();
 			
 				// Download post content if it's from the author we're looking for
@@ -91,13 +95,19 @@ class App extends Component {
 					document.querySelector('#date').innerText = postDate;
 
 					// Display post content
-					var content = post.querySelectorAll('#tableMsg .pbmsg')[0].innerText.trim();
-					document.querySelector('#content').innerText = content;
+					const contentText = post.querySelectorAll('.pbmsg')[0].innerText.trim();
+					const contentHtml = post.querySelectorAll('.pbmsg')[0].innerHTML.trim();
+					document.querySelector('#content').innerHTML = contentHtml;
 
-					// Add post to zip archive
-					const postContent = `${authorName}\n${postTitle}\n${postDate}\n${recCount}\n\n${content}`;
-					const fileName = sanitize(`${postNumber} ${postTitle.replace('Subject: ', '')} ${postDate.replace('Date: ', '')}.txt`);
-					zip.file(fileName, postContent);
+					// Add post as text to zip archive
+					const postContentText = `${authorName}\n${postTitle}\n${postDate}\n${recCount}\n\n${contentText}`;
+					const fileNameText = sanitize(`${postNumber} ${postTitle.replace('Subject: ', '')} ${postDate.replace('Date: ', '')}.txt`);
+					zip.file(fileNameText, postContentText);
+					
+					// Add post as html to zip archive
+					const postContentHtml = `<html><head><title>${postTitle}</title></head><body>Board: ${boardName}<br>${authorName}<br>${postTitle}<br>${postDate}<br>${recCount}<br><br>${contentHtml}</body>`;
+					const fileNameHtml = sanitize(`${postNumber} ${postTitle.replace('Subject: ', '')} ${postDate.replace('Date: ', '')}.html`);
+					zip.file(fileNameHtml, postContentHtml);
 				} else {
 					document.querySelector('#author').innerHTML = `<b>Last post reached for ${self.state.userName}</b>`;
 					document.querySelector('#title').innerText = '';
@@ -272,10 +282,10 @@ class App extends Component {
 
 	// Create a zip archive for the posts
 	const zip = new JSZip();
-	
+
 	// Load posts and start the download process
 	this.getListOfPostsAndDownload(this.state.boardStartLocation, zip);
-	
+
     // this.setState({
       // boards: ['http://boards.fool.co.uk/a-fool-and-his-money-51365.aspx?mid=6808140&sort=username']
     // });	
